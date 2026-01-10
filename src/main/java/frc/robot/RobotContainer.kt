@@ -1,11 +1,18 @@
 package frc.robot
 
+import frc.robot.subsystems.Intake
+import frc.robot.subsystems.Wrist
+import frc.robot.commands.IntakeCommands
+import frc.robot.commands.WristCommands
+import frc.robot.commands.CommandsList
+
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController
 import edu.wpi.first.wpilibj2.command.button.Trigger
 import frc.robot.Constants.OperatorConstants
 import frc.robot.commands.Autos
 import frc.robot.commands.ExampleCommand
 import frc.robot.subsystems.ExampleSubsystem
+
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -22,12 +29,17 @@ object RobotContainer
 {
     // Replace with CommandPS4Controller or CommandJoystick if needed
     private val driverController = CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT)
-        
+    val intake = Intake()
+    val wrist = Wrist()
+
+    val intakeCommands = IntakeCommands(intake)
+    val wristCommands = WristCommands(wrist)
+    val commandsList = CommandsList(intake, wrist)
+
     init
     {
         configureBindings()
-        // Reference the Autos object so that it is initialized, placing the chooser on the dashboard
-        Autos
+        wrist.syncAbsolute()
     }
 
     /**
@@ -40,10 +52,19 @@ object RobotContainer
     private fun configureBindings()
     {
         // Schedule `ExampleCommand` when `exampleCondition` changes to `true`
-        Trigger { ExampleSubsystem.exampleCondition() }.onTrue(ExampleCommand())
+
+        //Trigger { ExampleSubsystem.exampleCondition() }.onTrue(ExampleCommand())
 
         // Schedule `exampleMethodCommand` when the Xbox controller's B button is pressed,
         // cancelling on release.
-        driverController.b().whileTrue(ExampleSubsystem.exampleMethodCommand())
+
+        //independent control
+        driverController.a().onTrue(intakeCommands.startIntake)
+        driverController.b().onTrue(intakeCommands.stopIntake)
+        driverController.x().onTrue(wristCommands.raiseDeployer)
+        driverController.y().onTrue(wristCommands.downDeployer)
+
+        driverController.leftBumper().onTrue(commandsList.raise)
+        driverController.rightBumper().onTrue(commandsList.deploy)
     }
 }

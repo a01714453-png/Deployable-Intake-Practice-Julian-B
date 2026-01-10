@@ -1,4 +1,5 @@
 package frc.robot.subsystems
+import  frc.robot.subsystems.intakeConfig
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase
 import edu.wpi.first.wpilibj2.command.Command
@@ -8,64 +9,43 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration
 import com.ctre.phoenix6.controls.VoltageOut
 import com.ctre.phoenix6.hardware.TalonFX
 import com.ctre.phoenix6.signals.NeutralModeValue
-// By making a subsystem a Kotlin object, we ensure there is only ever one instance of it.
-// It also reduces the need to have reference variables for the subsystems to be passed around.
 
-class Intake() : SubsystemBase(){
+import edu.wpi.first.units.measure.AngularVelocity
+import com.ctre.phoenix6.configs.MotorOutputConfigs
+import com.ctre.phoenix6.configs.CurrentLimitsConfigs
+import com.ctre.phoenix6.signals.InvertedValue
+import com.ctre.phoenix6.controls.DutyCycleOut
+
+
+class Intake : SubsystemBase() {
     private val config = intakeConfig
-    private val motorController = TalonFX(config.motorControllerID)
+    private val motorController = TalonFX(config.motorControllerID) //Declaring the Motor.
+    private val motorSpeed = DutyCycleOut(0.0)
+
+    fun getIntakeSpeed () : AngularVelocity{ //This function will later be used to know if the intake speed
+        return motorController.velocity.value
+    }
+
+    fun setIntakeSpeed ( speed: Double) { // Function to turn on the intake
+        motorController.setControl(motorSpeed.withOutput(speed))
+    }
+
+    fun stopIntake () { //used to turn off the intake
+        motorController.setControl(motorSpeed.withOutput(0.0))
+    }
+
 
     init {
-        val motorConfigs = motorOutputConfigs()
-        motorConfigs.Inverted = InvertedValue.ClockWise_Positive
+        val motorConfigs = MotorOutputConfigs()
+        motorConfigs.Inverted = InvertedValue.Clockwise_Positive
         motorConfigs.NeutralMode = NeutralModeValue.Brake
 
         val motorLimits = CurrentLimitsConfigs()
         motorLimits.SupplyCurrentLimitEnable = true
         motorLimits.SupplyCurrentLimit = config.motorAmpsLimit
 
+        motorController.configurator.apply(motorConfigs)
+        motorController.configurator.apply(motorLimits)
+
         }
     }
-
-}
-
-
-
-object ExampleSubsystem : SubsystemBase()
-{
-    /**
-     * Example command factory method.
-     *
-     * @return a command
-     */
-    fun exampleMethodCommand(): Command = runOnce {
-        // Subsystem.runOnce() implicitly add `this` as a required subsystem.
-        // TODO: one-time action goes here
-    }
-
-    /**
-     * An example method querying a boolean state of the subsystem (for example, a digital sensor).
-     *
-     * @return value of some boolean subsystem state, such as a digital sensor.
-     */
-    fun exampleCondition(): Boolean {
-        // Query some boolean state, such as a digital sensor.
-        return false
-    }
-
-    override fun periodic()
-    {
-        // This method will be called once per scheduler run
-    }
-
-    override fun simulationPeriodic()
-    {
-        // This method will be called once per scheduler run during simulation
-    }
-
-    fun exampleAction()
-    {
-        // This action is called by the ExampleCommand
-        println("ExampleSubsystem.exampleAction has been called")
-    }
-}
